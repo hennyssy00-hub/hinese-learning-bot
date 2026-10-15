@@ -1,0 +1,12 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+
+# Local Config & Secrets (Never commit secrets to GitHub!)
+config.json
+.env
+
+# User data
+user_progress/
