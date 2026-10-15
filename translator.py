@@ -319,14 +319,14 @@ async def translate_with_gemini_ai(text: str, api_key: str) -> str:
         "   - Cung cấp: Tiếng Trung bản xứ chuẩn, Pinyin thanh điệu, giải thích ngữ cảnh ngắn gọn.\n"
         "4. Định dạng HTML Telegram rõ ràng (dùng <b>, <i>, <code>), emoji sinh động, dễ đọc."
     )
-    models = ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-pro"]
+    models = ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-flash-lite-latest", "gemini-3.1-flash-lite", "gemini-3.8-flash"]
     payload = {
         "contents": [
             {"role": "user", "parts": [{"text": f"{system_prompt}\n\nHãy dịch câu sau:\n\"{text}\""}]}
         ],
-        "generationConfig": {"temperature": 0.3, "maxOutputTokens": 800}
+        "generationConfig": {"temperature": 0.3, "maxOutputTokens": 2048}
     }
-    async with httpx.AsyncClient(timeout=18.0) as client:
+    async with httpx.AsyncClient(timeout=30.0) as client:
         for model in models:
             url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key.strip()}"
             try:

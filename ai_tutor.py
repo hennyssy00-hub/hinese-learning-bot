@@ -46,7 +46,7 @@ async def validate_gemini_key(api_key: str) -> tuple[bool, str]:
     if not cleaned or "..." in cleaned or cleaned == "AIzaSy":
         return False, "Bạn chưa điền mã API Key thật (chuỗi 'AIzaSy...' chỉ là ví dụ minh họa). Hãy vào Google AI Studio tạo key và dán toàn bộ chuỗi key vào đây!"
 
-    models_to_test = ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-pro"]
+    models_to_test = ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-flash-lite-latest", "gemini-3.1-flash-lite", "gemini-3.8-flash"]
     last_err = ""
     for model in models_to_test:
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={cleaned}"
@@ -124,13 +124,13 @@ async def chat_with_gemini(user_message: str, history: list[dict], api_key: str)
         "contents": contents,
         "generationConfig": {
             "temperature": 0.7,
-            "maxOutputTokens": 1000,
+            "maxOutputTokens": 2048,
         }
     }
 
-    models = ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-pro"]
+    models = ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-flash-lite-latest", "gemini-3.1-flash-lite", "gemini-3.8-flash"]
     last_err = None
-    async with httpx.AsyncClient(timeout=25.0) as client:
+    async with httpx.AsyncClient(timeout=30.0) as client:
         for model in models:
             url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key.strip()}"
             try:
