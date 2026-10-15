@@ -42,19 +42,31 @@ def set_gemini_api_key(new_key: str) -> bool:
 
 async def validate_gemini_key(api_key: str) -> tuple[bool, str]:
     """Kiểm tra xem Gemini API key có hoạt động và hợp lệ không."""
-    models_to_test = ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-2.5-flash"]
+    cleaned = api_key.strip()
+    if not cleaned or "..." in cleaned or cleaned == "AIzaSy":
+        return False, "Bạn chưa điền mã API Key thật (chuỗi 'AIzaSy...' chỉ là ví dụ minh họa). Hãy vào Google AI Studio tạo key và dán toàn bộ chuỗi key vào đây!"
+
+    models_to_test = ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-pro"]
     last_err = ""
     for model in models_to_test:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key.strip()}"
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={cleaned}"
         payload = {
-            "contents": [{"parts": [{"text": "Hello, respond with OK"}]}],
-            "generationConfig": {"maxOutputTokens": 10}
+            "contents": [{"parts": [{"text": "Hello"}]}],
+            "generationConfig": {"maxOutputTokens": 5}
         }
         try:
-            async with httpx.AsyncClient(timeout=10.0) as client:
+            async with httpx.AsyncClient(timeout=8.0) as client:
                 res = await client.post(url, json=payload)
                 if res.status_code == 200:
                     return True, model
+                # Nếu API key không hợp lệ hoặc bị cấm, dừng ngay để báo lỗi nhanh
+                if res.status_code in (400, 403):
+                    try:
+                        err_json = res.json()
+                        msg = err_json.get("error", {}).get("message", res.text[:120])
+                    except Exception:
+                        msg = res.text[:120]
+                    return False, f"HTTP {res.status_code}: {msg}"
                 last_err = f"HTTP {res.status_code}: {res.text[:120]}"
         except Exception as e:
             last_err = str(e)
@@ -116,7 +128,7 @@ async def chat_with_gemini(user_message: str, history: list[dict], api_key: str)
         }
     }
 
-    models = ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-2.5-flash"]
+    models = ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-pro"]
     last_err = None
     async with httpx.AsyncClient(timeout=25.0) as client:
         for model in models:

@@ -14,6 +14,7 @@ Chức năng:
 import os
 import sys
 import json
+import html
 import random
 import logging
 import asyncio
@@ -987,27 +988,35 @@ async def setkey_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     new_key = args[0].strip()
     status_msg = await update.message.reply_text("⏳ <i>Đang kiểm tra kết nối với máy chủ Google Gemini AI...</i>", parse_mode="HTML")
 
-    is_valid, info = await validate_gemini_key(new_key)
-    if is_valid:
-        set_gemini_api_key(new_key)
-        success_text = (
-            "🎉 <b>KÍCH HOẠT GEMINI AI THÀNH CÔNG!</b>\n"
-            "━━━━━━━━━━━━━━━━━━━━\n"
-            f"✅ <b>Mô hình hoạt động:</b> <code>{info}</code>\n\n"
-            "🌟 <b>Các tính năng đã được nâng cấp siêu cấp:</b>\n"
-            "1. <b>Bộ Dịch Thuật Khẩu Ngữ:</b> Dịch chuẩn xác 100% tiếng lóng, chat mạng, thuật ngữ thanh toán, nạp rút, P2P (代收, 代付, 宝, 亲...).\n"
-            "2. <b>Thầy Lý AI 1-1:</b> Phản xạ thông minh, sửa ngữ pháp và kèm riêng tự nhiên như người bản xứ!"
+    try:
+        is_valid, info = await validate_gemini_key(new_key)
+        if is_valid:
+            set_gemini_api_key(new_key)
+            success_text = (
+                "🎉 <b>KÍCH HOẠT GEMINI AI THÀNH CÔNG!</b>\n"
+                "━━━━━━━━━━━━━━━━━━━━\n"
+                f"✅ <b>Mô hình hoạt động:</b> <code>{info}</code>\n\n"
+                "🌟 <b>Các tính năng đã được nâng cấp siêu cấp:</b>\n"
+                "1. <b>Bộ Dịch Thuật Khẩu Ngữ:</b> Dịch chuẩn xác 100% tiếng lóng, chat mạng, thuật ngữ thanh toán, nạp rút, P2P (代收, 代付, 宝, 亲...).\n"
+                "2. <b>Thầy Lý AI 1-1:</b> Phản xạ thông minh, sửa ngữ pháp và kèm riêng tự nhiên như người bản xứ!"
+            )
+            await status_msg.edit_text(success_text, parse_mode="HTML")
+        else:
+            err_text = (
+                "⚠️ <b>LỖI KẾT NỐI GEMINI API!</b>\n"
+                "━━━━━━━━━━━━━━━━━━━━\n"
+                f"Không thể xác thực Key của bạn.\n"
+                f"Chi tiết: <code>{html.escape(info)}</code>\n\n"
+                "💡 <i>Lưu ý: Bạn cần dán chuỗi API Key thật (lấy tại Google AI Studio), không gõ nguyên mẫu ví dụ 'AIzaSy...'.</i>\n"
+                "Cú pháp: <code>/setkey &lt;MÃ_KEY_CỦA_BẠN&gt;</code>"
+            )
+            await status_msg.edit_text(err_text, parse_mode="HTML", disable_web_page_preview=True)
+    except Exception as e:
+        logger.error(f"Error in setkey_command: {e}", exc_info=True)
+        await status_msg.edit_text(
+            f"⚠️ <b>ĐÃ CÓ LỖI XẢY RA KHI KIỂM TRA:</b>\n<code>{html.escape(str(e))}</code>\n\nVui lòng thử lại sau.",
+            parse_mode="HTML"
         )
-        await status_msg.edit_text(success_text, parse_mode="HTML")
-    else:
-        err_text = (
-            "⚠️ <b>LỖI KẾT NỐI GEMINI API!</b>\n"
-            "━━━━━━━━━━━━━━━━━━━━\n"
-            f"Không thể xác thực Key của bạn.\n"
-            f"Chi tiết: <code>{html.escape(info)}</code>\n\n"
-            "Vui lòng kiểm tra lại key lấy từ <a href='https://aistudio.google.com/'>Google AI Studio</a> và gửi lại: <code>/setkey AIzaSy...</code>"
-        )
-        await status_msg.edit_text(err_text, parse_mode="HTML", disable_web_page_preview=True)
 
 
 async def keyinfo_command(update: Update, context: ContextTypes.DEFAULT_TYPE):

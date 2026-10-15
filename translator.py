@@ -319,7 +319,7 @@ async def translate_with_gemini_ai(text: str, api_key: str) -> str:
         "   - Cung cấp: Tiếng Trung bản xứ chuẩn, Pinyin thanh điệu, giải thích ngữ cảnh ngắn gọn.\n"
         "4. Định dạng HTML Telegram rõ ràng (dùng <b>, <i>, <code>), emoji sinh động, dễ đọc."
     )
-    models = ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-2.5-flash"]
+    models = ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-pro"]
     payload = {
         "contents": [
             {"role": "user", "parts": [{"text": f"{system_prompt}\n\nHãy dịch câu sau:\n\"{text}\""}]}
