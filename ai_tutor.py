@@ -21,7 +21,44 @@ def get_gemini_api_key() -> str | None:
                     key = cfg.get("gemini_api_key")
             except Exception:
                 pass
-    return key
+    return key.strip() if key else None
+
+
+def set_gemini_api_key(new_key: str) -> bool:
+    """Lưu Gemini API key vào config.json."""
+    config_path = Path("config.json")
+    cfg = {}
+    if config_path.exists():
+        try:
+            with open(config_path, "r", encoding="utf-8") as f:
+                cfg = json.load(f)
+        except Exception:
+            cfg = {}
+    cfg["gemini_api_key"] = new_key.strip()
+    with open(config_path, "w", encoding="utf-8") as f:
+        json.dump(cfg, f, ensure_ascii=False, indent=4)
+    return True
+
+
+async def validate_gemini_key(api_key: str) -> tuple[bool, str]:
+    """Kiểm tra xem Gemini API key có hoạt động và hợp lệ không."""
+    models_to_test = ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-2.5-flash"]
+    last_err = ""
+    for model in models_to_test:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key.strip()}"
+        payload = {
+            "contents": [{"parts": [{"text": "Hello, respond with OK"}]}],
+            "generationConfig": {"maxOutputTokens": 10}
+        }
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                res = await client.post(url, json=payload)
+                if res.status_code == 200:
+                    return True, model
+                last_err = f"HTTP {res.status_code}: {res.text[:120]}"
+        except Exception as e:
+            last_err = str(e)
+    return False, last_err
 
 
 SYSTEM_PROMPT = """
@@ -59,8 +96,6 @@ CHINESE_DICTIONARY_SAMPLE = {
 
 async def chat_with_gemini(user_message: str, history: list[dict], api_key: str) -> str:
     """Gọi Gemini API để đàm thoại và dạy học chuyên sâu."""
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
-    
     # Format messages
     contents = [
         {"role": "user", "parts": [{"text": SYSTEM_PROMPT + "\nHọc viên bắt đầu phiên học."}]},
@@ -81,11 +116,20 @@ async def chat_with_gemini(user_message: str, history: list[dict], api_key: str)
         }
     }
 
+    models = ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-2.5-flash"]
+    last_err = None
     async with httpx.AsyncClient(timeout=25.0) as client:
-        res = await client.post(url, json=payload)
-        res.raise_for_status()
-        data = res.json()
-        return data["candidates"][0]["content"]["parts"][0]["text"]
+        for model in models:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key.strip()}"
+            try:
+                res = await client.post(url, json=payload)
+                if res.status_code == 200:
+                    data = res.json()
+                    return data["candidates"][0]["content"]["parts"][0]["text"]
+                last_err = f"Status {res.status_code}: {res.text[:100]}"
+            except Exception as e:
+                last_err = str(e)
+    raise RuntimeError(f"Gemini API error: {last_err}")
 
 
 def offline_expert_tutor(user_text: str) -> str:

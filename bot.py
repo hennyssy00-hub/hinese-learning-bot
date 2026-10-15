@@ -42,7 +42,7 @@ from lessons import CURRICULUM, QUIZZES, LEVEL_NAMES
 from roleplay import ROLEPLAY_SCENARIOS
 from phrasebook import PHRASE_CATEGORIES
 from grammar_guide import GRAMMAR_POINTS
-from ai_tutor import get_tutor_response
+from ai_tutor import get_tutor_response, get_gemini_api_key, set_gemini_api_key, validate_gemini_key
 from translator import translate_text
 from keep_alive import keep_alive
 
@@ -182,7 +182,9 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "🔹 /quiz - Trắc nghiệm kiểm tra kiến thức\n"
         "🔹 /vocab - Ôn tập nhanh từ vựng Flashcard\n"
         "🔹 /progress hoặc /profile - Xem điểm XP, cấp bậc và tiến độ học\n"
-        "🔹 /roadmap - Xem bản đồ lộ trình chi tiết\n\n"
+        "🔹 /roadmap - Xem bản đồ lộ trình chi tiết\n"
+        "🔹 /setkey &lt;key&gt; - Kích hoạt Gemini AI Key miễn phí từ Google\n"
+        "🔹 /keyinfo - Kiểm tra trạng thái AI của bot\n\n"
         "💡 <b>MẸO DỊCH NHANH:</b> Bạn có thể gõ ngay <code>/dich hôm nay bạn muốn ăn gì</code> để nhận bản dịch tiếng Trung kèm Pinyin lập tức!"
     )
     await update.message.reply_text(help_text, parse_mode="HTML")
@@ -962,6 +964,76 @@ async def roadmap(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(text, parse_mode="HTML")
 
 
+async def setkey_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle /setkey <API_KEY> to configure Gemini API Key directly in chat."""
+    args = context.args
+    if not args:
+        current_key = get_gemini_api_key()
+        masked_key = f"{current_key[:6]}...{current_key[-4:]}" if current_key else "Chưa cấu hình"
+        text = (
+            "🔑 <b>HƯỚNG DẪN CẤU HÌNH GEMINI AI CHO BOT</b>\n"
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            f"📍 <b>Trạng thái hiện tại:</b> <code>{masked_key}</code>\n\n"
+            "💡 <b>Cách lấy key miễn phí từ Google:</b>\n"
+            "1. Truy cập <a href='https://aistudio.google.com/'>Google AI Studio</a>\n"
+            "2. Đăng nhập Gmail và nhấn <b>Get API key</b> ➔ <b>Create API key</b>\n"
+            "3. Sao chép chuỗi key (bắt đầu bằng <code>AIzaSy...</code>)\n\n"
+            "👉 <b>Cách kích hoạt trên bot:</b>\n"
+            "Gửi cú pháp: <code>/setkey AIzaSy...</code>"
+        )
+        await update.message.reply_text(text, parse_mode="HTML", disable_web_page_preview=True)
+        return
+
+    new_key = args[0].strip()
+    status_msg = await update.message.reply_text("⏳ <i>Đang kiểm tra kết nối với máy chủ Google Gemini AI...</i>", parse_mode="HTML")
+
+    is_valid, info = await validate_gemini_key(new_key)
+    if is_valid:
+        set_gemini_api_key(new_key)
+        success_text = (
+            "🎉 <b>KÍCH HOẠT GEMINI AI THÀNH CÔNG!</b>\n"
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            f"✅ <b>Mô hình hoạt động:</b> <code>{info}</code>\n\n"
+            "🌟 <b>Các tính năng đã được nâng cấp siêu cấp:</b>\n"
+            "1. <b>Bộ Dịch Thuật Khẩu Ngữ:</b> Dịch chuẩn xác 100% tiếng lóng, chat mạng, thuật ngữ thanh toán, nạp rút, P2P (代收, 代付, 宝, 亲...).\n"
+            "2. <b>Thầy Lý AI 1-1:</b> Phản xạ thông minh, sửa ngữ pháp và kèm riêng tự nhiên như người bản xứ!"
+        )
+        await status_msg.edit_text(success_text, parse_mode="HTML")
+    else:
+        err_text = (
+            "⚠️ <b>LỖI KẾT NỐI GEMINI API!</b>\n"
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            f"Không thể xác thực Key của bạn.\n"
+            f"Chi tiết: <code>{html.escape(info)}</code>\n\n"
+            "Vui lòng kiểm tra lại key lấy từ <a href='https://aistudio.google.com/'>Google AI Studio</a> và gửi lại: <code>/setkey AIzaSy...</code>"
+        )
+        await status_msg.edit_text(err_text, parse_mode="HTML", disable_web_page_preview=True)
+
+
+async def keyinfo_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle /keyinfo command."""
+    current_key = get_gemini_api_key()
+    if current_key:
+        masked_key = f"{current_key[:6]}...{current_key[-4:]}"
+        text = (
+            "🟢 <b>TRẠNG THÁI AI: ĐÃ KÍCH HOẠT GEMINI AI</b>\n"
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            f"🔑 <b>API Key:</b> <code>{masked_key}</code>\n"
+            "⚡ Bot đang chạy bằng trí tuệ nhân tạo Gemini Flash cao cấp nhất!\n"
+            "Nếu muốn thay đổi key, hãy gửi: <code>/setkey &lt;KEY_MỚI&gt;</code>"
+        )
+    else:
+        text = (
+            "🟡 <b>TRẠNG THÁI AI: CHẾ ĐỘ NỘI BỘ + HYBRID NEURAL</b>\n"
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            "Bot đang hoạt động bằng <b>Bộ từ điển chuyên sâu giao dịch & khẩu ngữ bản xứ tích hợp</b>.\n\n"
+            "💡 <b>Bạn muốn nâng cấp lên Gemini AI siêu cấp?</b>\n"
+            "Gửi cú pháp: <code>/setkey &lt;API_KEY&gt;</code>\n"
+            "Lấy key miễn phí 100% tại <a href='https://aistudio.google.com/'>Google AI Studio</a>"
+        )
+    await update.message.reply_text(text, parse_mode="HTML", disable_web_page_preview=True)
+
+
 # ============================================================
 # MASTER MESSAGE HANDLER (NLP, TRANSLATE & AI TUTOR)
 # ============================================================
@@ -1216,6 +1288,10 @@ def main():
     app.add_handler(CommandHandler("profile", show_progress))
     app.add_handler(CommandHandler("roadmap", roadmap))
     app.add_handler(CommandHandler("vocab", vocab_review))
+    app.add_handler(CommandHandler("setkey", setkey_command))
+    app.add_handler(CommandHandler("apikey", setkey_command))
+    app.add_handler(CommandHandler("keyinfo", keyinfo_command))
+    app.add_handler(CommandHandler("status", keyinfo_command))
 
     # Core Callback Query Handlers
     app.add_handler(CallbackQueryHandler(back_to_main_callback, pattern=r"^back_to_main$"))

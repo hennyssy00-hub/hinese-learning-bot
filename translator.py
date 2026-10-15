@@ -83,7 +83,70 @@ COMMON_VOCAB = {
     "难过": "Buồn",
     "着急": "Sốt ruột / Gấp gáp",
     "麻烦": "Phiền phức / Làm phiền",
+    # --- THUẬT NGỮ GIAO DỊCH, THANH TOÁN, NẠP RÚT, TÀI CHÍNH ---
+    "代收": "Thu hộ / Nhận tiền hộ",
+    "代收户": "Tài khoản thu hộ / nhận tiền",
+    "代付": "Thanh toán hộ / Trả tiền hộ",
+    "代付户": "Tài khoản thanh toán hộ",
+    "下发": "Giải ngân / Chuyển khoản xuất",
+    "下发卡": "Thẻ giải ngân / xuất tiền",
+    "下发户": "Tài khoản giải ngân",
+    "查账": "Kiểm tra giao dịch / Soát bill",
+    "查单": "Tra cứu đơn / Check đơn",
+    "回执": "Biên lai / Bill chuyển tiền",
+    "回执单": "Biên lai / Bill thanh toán",
+    "挂单": "Treo lệnh / Đặt lệnh",
+    "冻结": "Đóng băng tài khoản / Phong tỏa thẻ",
+    "解冻": "Mở phong tỏa / Mở đóng băng thẻ",
+    "限额": "Chạm hạn mức / Hạn mức giao dịch",
+    "风控": "Kiểm soát rủi ro / Tài khoản bị quét bảo mật",
+    "掉单": "Lạc đơn / Mất đơn",
+    "补单": "Bù đơn / Nạp bù giao dịch",
+    "对账": "Đối soát tài khoản / Khớp bill",
+    "流水": "Sao kê dòng tiền / Doanh số",
+    "冲正": "Hoàn tiền lỗi / Đảo nợ",
+    "到账": "Tiền đã vào tài khoản",
+    "未到账": "Tiền chưa vào tài khoản",
+    "出款": "Xuất tiền / Chuyển khoản đi",
+    "入款": "Nạp tiền vào / Thu tiền",
+    "充值": "Nạp tiền",
+    "提现": "Rút tiền",
+    "开户行": "Ngân hàng mở tài khoản",
+    "支行": "Chi nhánh ngân hàng",
+    "卡号": "Số thẻ ngân hàng",
+    "户名": "Tên chủ tài khoản",
+    "账号": "Số tài khoản",
+    "卡商": "Đại lý thẻ ngân hàng",
+    "码商": "Đại lý mã QR thanh toán",
+    "跑分": "Chạy dòng tiền / Giao dịch trung gian",
+    "手续费": "Phí giao dịch",
+    "汇率": "Tỷ giá",
+    "转账": "Chuyển khoản",
+    "扫码": "Quét mã QR",
+    # --- TIẾNG LÓNG MẠNG & KHẨU NGỮ CHAT BẢN XỨ ---
+    "宝": "Bạn ơi / Bồ ơi (xưng hô thân mật khi chat)",
+    "宝宝": "Bạn ơi / Cưng ơi (xưng hô thân mật)",
+    "亲": "Bạn ơi / Khách yêu ơi",
+    "亲亲": "Bạn ơi / Bạn nhé",
+    "铁子": "Người anh em / Bạn hữu",
+    "老铁": "Người anh em / Bạn hiền",
+    "没有的了": "Hết rồi / Không còn cái nào nữa",
+    "没有了": "Hết rồi / Không còn nữa",
+    "没了": "Hết rồi",
+    "正常": "Bình thường / Hoạt động ổn định",
+    "稍等": "Chờ chút nhé / Đang xử lý",
+    "马上": "Ngay lập tức / Liền đây",
+    "收到": "Đã nhận / Rõ rồi",
+    "安排": "Xử lý ngay / Lên đơn ngay",
+    "催一下": "Giục bên kia / Hối bên kia một chút",
 }
+
+# Đăng ký từ chuyên ngành cho jieba phân tách chính xác
+for term in [
+    "代收户", "代付户", "下发卡", "下发户", "回执单", "对账单", "没有的了", "未到账", 
+    "冲正", "跑分", "卡商", "码商", "开户行", "手续费", "风控"
+]:
+    jieba.add_word(term)
 
 # Ánh xạ câu giao tiếp cửa miệng chuẩn bản xứ (Vietnamese -> Chinese Spoken Idioms)
 SPOKEN_IDIOMS = {
@@ -114,6 +177,24 @@ SPOKEN_IDIOMS = {
     "gói mang về": ("打包！", "Dǎbāo!", "Nói với nhân viên khi muốn mang đồ về."),
     "bao nhiêu tiền một bát": ("多少钱一碗？", "Duōshao qián yì wǎn?", "Hỏi giá đồ ăn tính theo tô/bát."),
     "bớt chút đi": ("便宜一点吧！", "Piányi yìdiǎn ba!", "Câu mặc cả quốc dân khi đi mua sắm."),
+}
+
+# Ngân hàng cụm từ giao dịch, tài chính & chat lóng đối tác (Financial & P2P Chat Bank)
+FINANCIAL_CHAT_IDIOMS = {
+    "代收户没有的了宝": ("Hết tài khoản thu hộ rồi bạn ơi! (Không còn tài khoản nhận tiền nữa đâu bồ ơi)", "Dài shōu hù méi yǒu de le bǎo", "Ngữ cảnh giao dịch/thanh toán: '代收户' là tài khoản thu hộ/nhận tiền, '没有的了' nghĩa là hết rồi, '宝' là xưng hô thân mật bạn ơi/bồ ơi."),
+    "代收户没有的了": ("Hết tài khoản thu hộ rồi! (Không còn tài khoản nhận tiền nữa)", "Dài shōu hù méi yǒu de le", "Ngữ cảnh thanh toán: '代收户' là tài khoản thu hộ tiền."),
+    "代付正常": ("Kênh thanh toán hộ / trả hộ đang bình thường nhé!", "Dài fù zhèng cháng", "'代付' là thanh toán hộ (Alipay/WeChat/Bank), '正常' là hoạt động bình thường, ổn định."),
+    "代收正常": ("Kênh thu hộ / nhận tiền đang hoạt động bình thường nhé!", "Dài shōu zhèng cháng", "'代收' là nhận tiền hộ/thu hộ."),
+    "查下账": ("Kiểm tra giao dịch / Soát bill giúp mình với!", "Chá xià zhàng", "Nhờ đối tác kiểm tra lại xem tiền đã vào tài khoản chưa."),
+    "查账": ("Kiểm tra giao dịch / Soát bill", "Chá zhàng", "Tra soát tài khoản ngân hàng hoặc cổng thanh toán."),
+    "回执发我": ("Gửi biên lai / bill chuyển tiền cho mình nhé!", "Huízhì fā wǒ", "Yêu cầu bên kia gửi ảnh chụp biên lai giao dịch."),
+    "回执单发我": ("Gửi biên lai chuyển khoản cho mình nhé!", "Huízhì dān fā wǒ", "Biên lai thanh toán."),
+    "钱还没到账": ("Tiền vẫn chưa vào tài khoản!", "Qián hái méi dào zhàng", "Báo tiền chưa vào tài khoản."),
+    "已经到账了": ("Tiền đã vào tài khoản rồi nhé!", "Yǐjīng dào zhàng le", "Xác nhận tiền đã về thành công."),
+    "下发卡冻结了": ("Thẻ giải ngân / xuất tiền bị phong tỏa rồi!", "Xià fā kǎ dòngjié le", "Thẻ xuất tiền gặp sự cố đóng băng."),
+    "账户被风控了": ("Tài khoản bị dính kiểm soát rủi ro / bị quét bảo mật rồi!", "Zhànghù bèi fēngkòng le", "Tài khoản bị hệ thống ngân hàng/ví tạm khóa bảo vệ."),
+    "限额了": ("Bị chạm hạn mức giao dịch rồi!", "Xiàn'é le", "Hạn mức trong ngày hoặc trên lần chuyển đã hết."),
+    "稍等正在处理": ("Chờ chút nhé, bên mình đang xử lý ngay đây!", "Shāoděng zhèngzài chǔlǐ", "Báo bên kia chờ trong khi xử lý giao dịch."),
 }
 
 
@@ -220,28 +301,74 @@ async def translate_with_google(text: str, sl: str, tl: str) -> tuple[str, str]:
 
 
 async def translate_with_gemini_ai(text: str, api_key: str) -> str:
-    """Bộ dịch thông minh cao cấp qua Gemini AI với chỉ dẫn sư phạm khẩu ngữ."""
+    """Bộ dịch thông minh cao cấp qua Gemini AI với chỉ dẫn sư phạm khẩu ngữ & thuật ngữ giao dịch."""
     system_prompt = (
-        "Bạn là Chuyên gia Dịch thuật Khẩu ngữ Song ngữ Trung - Việt / Việt - Trung đỉnh cao.\n"
-        "Yêu cầu tuyệt đối:\n"
-        "1. Dịch chuẩn văn phong NÓI ĐỜI THƯỜNG, tự nhiên, gần gũi, người bản xứ hay dùng.\n"
-        "2. Không dùng từ ngữ hàn lâm sách vở, không dịch word-by-word cứng nhắc.\n"
-        "3. Nếu là Việt -> Trung: Cung cấp Câu tiếng Trung chuẩn + Pinyin có thanh điệu + Giải thích ngữ cảnh + Biến thể giới trẻ.\n"
-        "4. Nếu là Trung -> Việt: Dịch nghĩa tiếng Việt đời thường + Pinyin câu gốc + Bóc tách từ vựng hay.\n"
-        "5. Định dạng HTML Telegram rõ ràng, dùng emoji đẹp mắt."
+        "Bạn là Chuyên gia Dịch thuật Song ngữ Trung - Việt & Việt - Trung siêu đẳng.\n"
+        "ĐẶC BIỆT THÔNG THẠO:\n"
+        "- Khẩu ngữ đời thường, tiếng lóng chat mạng của giới trẻ (宝/宝宝 = bạn ơi, bồ ơi, cưng ơi; 亲 = khách ơi/bạn ơi; 铁子 = người anh em; 绝了; 离谱...)\n"
+        "- Thuật ngữ giao dịch, tài chính, thanh toán, ngân hàng, nạp rút, P2P, Taobao, 1688, Alipay, WeChat (代收 = thu hộ tiền/nhận hộ tiền; 代付 = thanh toán hộ/trả hộ; 代收户 = tài khoản thu hộ/nhận tiền; 代付户 = tài khoản chuyển trả hộ; 下发 = giải ngân/xuất tiền ra; 查账 = soát bill/kiểm tra tiền; 回执 = biên lai/bill; 挂单 = treo lệnh; 冻结 = phong tỏa/đóng băng thẻ; 限额 = chạm hạn mức; 风控 = quét bảo mật/kiểm soát rủi ro; 到账 = tiền về tài khoản...)\n"
+        "QUY TẮC BẮT BUỘC:\n"
+        "1. Dịch chuẩn văn phong tự nhiên, đúng ngữ cảnh thực tế (KHÔNG dịch word-by-word máy móc).\n"
+        "   Ví dụ: '代收户没有的了宝' -> 'Hết tài khoản thu hộ/nhận tiền rồi bạn ơi!'. TUYỆT ĐỐI không dịch thành 'kho báu' hay 'cơ quan sưu tầm'.\n"
+        "   Ví dụ: '代付正常' -> 'Kênh thanh toán hộ/trả hộ đang bình thường nhé!'.\n"
+        "2. Nếu là Trung -> Việt:\n"
+        "   - Cung cấp: Chữ Hán gốc, Phiên âm Pinyin chuẩn có thanh điệu.\n"
+        "   - Nghĩa giao tiếp đời thường/chuyên ngành chuẩn xác.\n"
+        "   - Bóc tách 2-3 từ vựng then chốt (Hán tự, Pinyin, nghĩa).\n"
+        "3. Nếu là Việt -> Trung:\n"
+        "   - Cung cấp: Tiếng Trung bản xứ chuẩn, Pinyin thanh điệu, giải thích ngữ cảnh ngắn gọn.\n"
+        "4. Định dạng HTML Telegram rõ ràng (dùng <b>, <i>, <code>), emoji sinh động, dễ đọc."
     )
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
+    models = ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-2.5-flash"]
     payload = {
         "contents": [
             {"role": "user", "parts": [{"text": f"{system_prompt}\n\nHãy dịch câu sau:\n\"{text}\""}]}
         ],
-        "generationConfig": {"temperature": 0.4, "maxOutputTokens": 800}
+        "generationConfig": {"temperature": 0.3, "maxOutputTokens": 800}
     }
-    async with httpx.AsyncClient(timeout=15.0) as client:
-        res = await client.post(url, json=payload)
-        res.raise_for_status()
-        data = res.json()
-        return data["candidates"][0]["content"]["parts"][0]["text"]
+    async with httpx.AsyncClient(timeout=18.0) as client:
+        for model in models:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key.strip()}"
+            try:
+                res = await client.post(url, json=payload)
+                if res.status_code == 200:
+                    data = res.json()
+                    return data["candidates"][0]["content"]["parts"][0]["text"]
+            except Exception:
+                continue
+    raise RuntimeError("Gemini AI translation error across all models")
+
+
+def fix_misleading_translation(src_zh: str, trans_vi: str) -> str:
+    """Khắc phục các lỗi dịch máy ngô nghê khi Google/Bing nhầm lẫn tiếng lóng & thuật ngữ giao dịch."""
+    res = trans_vi.strip()
+
+    # Nhận diện mẫu câu đặc thù: 代收户没有的了宝 / 代收户没有了
+    if "代收户" in src_zh and any(k in src_zh for k in ["没有", "没了", "没"]):
+        if any(b in src_zh for b in ["宝", "亲"]):
+            return "Hết tài khoản thu hộ / nhận tiền rồi bạn ơi!"
+        return "Hết tài khoản thu hộ / nhận tiền rồi nhé!"
+
+    if "代付" in src_zh and "正常" in src_zh:
+        return "Kênh thanh toán hộ / trả hộ đang bình thường nhé!"
+
+    if "代收" in src_zh and "正常" in src_zh:
+        return "Kênh thu hộ / nhận tiền đang hoạt động bình thường nhé!"
+
+    # Lỗi kinh điển: "代收" bị Google/Bing dịch thành "cơ quan sưu tầm / sưu tầm / thu thập"
+    if "代收" in src_zh:
+        res = re.sub(r'cơ quan sưu tầm|cơ quan sưu tập|cơ quan thu gom|sưu tầm', 'thu hộ / nhận tiền', res, flags=re.IGNORECASE)
+
+    # Lỗi "宝" cuối câu bị dịch thành "kho báu / bảo vật"
+    if src_zh.endswith("宝") or src_zh.endswith("宝！") or src_zh.endswith("宝。") or src_zh.endswith("宝~"):
+        res = re.sub(r'kho báu|bảo vật|châu báu', 'bạn ơi', res, flags=re.IGNORECASE)
+
+    # Nếu vẫn dính câu dịch máy ngớ ngẩn "Không có kho báu nào..."
+    if "không có kho báu" in res.lower() or ("kho báu" in res.lower() and "không có" in res.lower()):
+        if "代收" in src_zh or "户" in src_zh:
+            return "Hết tài khoản thu hộ / nhận tiền rồi bạn ơi!"
+
+    return res
 
 
 # ============================================================
@@ -344,7 +471,29 @@ async def translate_text(text: str) -> str:
     # 2. Nhận diện ngôn ngữ đầu vào
     lang = detect_language(cleaned_text)
 
-    # 3. Kiểm tra từ điển thành ngữ khẩu ngữ tức thì (Zero-latency Instant Match)
+    # 3. Kiểm tra cụm từ giao dịch tài chính & khẩu ngữ tức thì
+    norm_text_raw = re.sub(r'[!?,.~。，？！\s]', '', cleaned_text.lower())
+    for phrase, (meaning, py, note) in FINANCIAL_CHAT_IDIOMS.items():
+        if norm_text_raw == re.sub(r'[!?,.~。，？！\s]', '', phrase.lower()):
+            final_pinyin = make_accurate_pinyin(cleaned_text)
+            vocab_list = extract_key_vocabulary(cleaned_text)
+            res = (
+                "🌐 <b>DỊCH THUẬT SONG NGỮ (TRUNG ➔ VIỆT CHUYÊN GIAO DỊCH & KHẨU NGỮ)</b>\n"
+                "━━━━━━━━━━━━━━━━━━━━\n"
+                f"🇨🇳 <b>Câu gốc:</b> <code>{html.escape(cleaned_text)}</code>\n"
+                f"🎵 <b>Pinyin:</b> <i>{final_pinyin}</i>\n\n"
+                f"🇻🇳 <b>Nghĩa giao tiếp chuẩn:</b> <b>{html.escape(meaning)}</b>\n"
+            )
+            if vocab_list:
+                res += "\n📚 <b>Bóc tách từ vựng then chốt:</b>\n"
+                for word, wpy, wmeaning in vocab_list:
+                    mean_str = f" - <i>{html.escape(wmeaning)}</i>" if wmeaning else ""
+                    res += f"• <b>{word}</b> (<code>{wpy}</code>){mean_str}\n"
+            if note:
+                res += f"\n💡 <i>Lưu ý ngữ cảnh: {note}</i>\n"
+            return res
+
+    # 4. Kiểm tra từ điển thành ngữ khẩu ngữ tức thì (Zero-latency Instant Match)
     norm_text = re.sub(r'[!?,.]', '', cleaned_text.lower()).strip()
     if norm_text in SPOKEN_IDIOMS:
         zh, py, note = SPOKEN_IDIOMS[norm_text]
@@ -358,7 +507,7 @@ async def translate_text(text: str) -> str:
             "💡 <i>Mẹo: Bấm vào dòng chữ Hán để sao chép nhanh và gửi tin nhắn!</i>"
         )
 
-    # 4. Thực hiện dịch qua Động cơ Neural LLM
+    # 5. Thực hiện dịch qua Động cơ Neural LLM
     try:
         if lang == "zh":
             # Trung -> Việt
@@ -366,6 +515,9 @@ async def translate_text(text: str) -> str:
                 trans_vi, py_from_engine = await microsoft_translator.translate(cleaned_text, "zh-Hans", "vi")
             except Exception:
                 trans_vi, py_from_engine = await translate_with_google(cleaned_text, "zh-CN", "vi")
+
+            # Áp dụng bộ lọc sửa lỗi dịch máy chuyên ngành & tiếng lóng
+            trans_vi = fix_misleading_translation(cleaned_text, trans_vi)
 
             # Luôn sinh Pinyin chuẩn bằng pypinyin
             final_pinyin = make_accurate_pinyin(cleaned_text)
