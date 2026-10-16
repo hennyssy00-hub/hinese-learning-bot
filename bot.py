@@ -55,6 +55,16 @@ logging.basicConfig(
     level=logging.INFO,
 )
 logger = logging.getLogger(__name__)
+import re
+
+async def safe_reply_html(message, text: str, reply_markup=None):
+    """Safely reply with HTML formatting. If Telegram rejects HTML parsing, fallback cleanly to plain text."""
+    try:
+        return await message.reply_text(text, reply_markup=reply_markup, parse_mode="HTML")
+    except Exception as e:
+        logger.warning(f"Telegram parse_mode=HTML failed: {e}. Falling back to clean text.")
+        clean_text = re.sub(r'<[^>]+>', '', text)
+        return await message.reply_text(clean_text, reply_markup=reply_markup)
 
 # ============================================================
 # PROGRESS & XP TRACKING
@@ -203,7 +213,7 @@ async def translate_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.chat.send_action("typing")
         result = await translate_text(user_query)
         keyboard = [[InlineKeyboardButton("🌐 Dịch tiếp câu khác", callback_data="toggle_translate_mode")]]
-        await update.message.reply_text(result, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="HTML")
+        await safe_reply_html(update.message, result, reply_markup=InlineKeyboardMarkup(keyboard))
         return
 
     # Enable translation mode
@@ -223,7 +233,7 @@ async def translate_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "💡 <i>Gõ /stopdich để tắt chế độ dịch bất cứ lúc nào.</i>"
     )
     keyboard = [[InlineKeyboardButton("🛑 Dừng dịch thuật", callback_data="stop_translate_mode")]]
-    await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="HTML")
+    await safe_reply_html(update.message, text, reply_markup=InlineKeyboardMarkup(keyboard))
 
 
 async def stop_translate_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1056,11 +1066,18 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await handle_roleplay_user_input(update, context)
         return
 
-    # 2. Check if user is in Translation Mode or used translation prefix
+    # Check status and message traits
     translate_mode = context.user_data.get("translate_mode", False)
     is_explicit_translate = user_text.lower().startswith("dịch ") or user_text.lower().startswith("dịch: ")
+    has_hanzi = any('\u4e00' <= c <= '\u9fff' for c in user_text)
+    chat_mode = context.user_data.get("chat_mode", False)
 
-    if translate_mode or is_explicit_translate:
+    # 2. Priority Auto-Translation:
+    # Triggered if:
+    # - User is in translate_mode
+    # - User typed "dịch ..."
+    # - OR user pasted text containing Chinese characters (while NOT in explicit chat_mode)
+    if (translate_mode or is_explicit_translate or has_hanzi) and not chat_mode:
         query_text = user_text
         if is_explicit_translate:
             # Strip "dịch " or "dịch: " prefix
@@ -1075,14 +1092,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 InlineKeyboardButton("🛑 Dừng dịch", callback_data="stop_translate_mode"),
             ]
         ]
-        await update.message.reply_text(translated_result, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="HTML")
+        await safe_reply_html(update.message, translated_result, reply_markup=InlineKeyboardMarkup(keyboard))
         return
 
-    # 3. Check if user is in 1-1 Chat Mode OR user explicitly sent Chinese characters
-    chat_mode = context.user_data.get("chat_mode", False)
-    has_hanzi = any('\u4e00' <= c <= '\u9fff' for c in user_text)
-
-    if chat_mode or has_hanzi:
+    # 3. 1-1 Chat Mode with Thầy Lý (only if user explicitly activated chat_mode via /chat or button)
+    if chat_mode:
         await update.message.chat.send_action("typing")
         history = context.user_data.get("chat_history", [])
         
@@ -1097,12 +1111,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [
                 InlineKeyboardButton("🌐 Dịch câu này", callback_data="toggle_translate_mode"),
                 InlineKeyboardButton("🎭 Đóng vai giao tiếp", callback_data="show_roleplay_menu"),
-            ]
+            ],
+            [InlineKeyboardButton("🛑 Dừng Chat 1-1", callback_data="stop_chat_mode")]
         ]
-        if chat_mode:
-            keyboard.append([InlineKeyboardButton("🛑 Dừng Chat 1-1", callback_data="stop_chat_mode")])
-
-        await update.message.reply_text(reply, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="HTML")
+        await safe_reply_html(update.message, reply, reply_markup=InlineKeyboardMarkup(keyboard))
         return
 
     # 4. Default quick guidance

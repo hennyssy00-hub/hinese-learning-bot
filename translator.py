@@ -139,12 +139,15 @@ COMMON_VOCAB = {
     "收到": "Đã nhận / Rõ rồi",
     "安排": "Xử lý ngay / Lên đơn ngay",
     "催一下": "Giục bên kia / Hối bên kia một chút",
+    "补齐": "Bù đủ / Nạp bù cho đủ",
+    "物流费": "Phí vận chuyển / Phí logistics",
+    "物流": "Vận chuyển / Logistics hàng hóa",
 }
 
 # Đăng ký từ chuyên ngành cho jieba phân tách chính xác
 for term in [
     "代收户", "代付户", "下发卡", "下发户", "回执单", "对账单", "没有的了", "未到账", 
-    "冲正", "跑分", "卡商", "码商", "开户行", "手续费", "风控"
+    "冲正", "跑分", "卡商", "码商", "开户行", "手续费", "风控", "物流费", "补齐", "把U", "物流"
 ]:
     jieba.add_word(term)
 
@@ -221,6 +224,10 @@ FINANCIAL_CHAT_IDIOMS = {
     "quy đổi ra u": ("折算成U", "Zhésuàn chéng U", "Quy đổi sang USDT."),
     "đổi ra u": ("换成U / 折算成U", "Huàn chéng U / Zhésuàn chéng U", "Đổi sang USDT."),
     "tính ra u": ("折算成U", "Zhésuàn chéng U", "Tính quy đổi sang USDT."),
+    "你把u补齐我们会付物流费的": ("Bạn nạp bù đủ số USDT đi, bên mình sẽ thanh toán phí vận chuyển (logistics) cho nhé!", "Nǐ bǎ U bǔqí, wǒmen huì fù wùliúfèi de", "Ngữ cảnh giao dịch P2P & logistics: 'U' là USDT, '补齐' là nạp bù đủ phần thiếu, '物流费' là cước phí vận chuyển."),
+    "你把u补齐我们会付物流费": ("Bạn nạp bù đủ số USDT đi, bên mình sẽ thanh toán phí vận chuyển cho nhé!", "Nǐ bǎ U bǔqí, wǒmen huì fù wùliúfèi", "Ngữ cảnh giao dịch P2P & vận tải."),
+    "把u补齐": ("Bù đủ số USDT đi nhé!", "Bǎ U bǔqí", "Nhắc đối tác bù đủ số tiền USDT còn thiếu."),
+    "物流费": ("Phí vận chuyển / Tiền cước logistics", "Wùliú fèi", "Cước vận tải/giao nhận hàng hóa."),
 }
 
 
@@ -412,9 +419,9 @@ async def translate_with_gemini_ai(text: str, api_key: str) -> str:
         "contents": [
             {"role": "user", "parts": [{"text": f"{system_prompt}\n\nHãy dịch câu sau:\n\"{text}\""}]}
         ],
-        "generationConfig": {"temperature": 0.2, "maxOutputTokens": 250}
+        "generationConfig": {"temperature": 0.2, "maxOutputTokens": 600}
     }
-    async with httpx.AsyncClient(timeout=15.0) as client:
+    async with httpx.AsyncClient(timeout=8.0) as client:
         for model in ordered_models:
             url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key.strip()}"
             try:
@@ -422,7 +429,12 @@ async def translate_with_gemini_ai(text: str, api_key: str) -> str:
                 if res.status_code == 200:
                     ACTIVE_TRANSLATE_MODEL = model
                     data = res.json()
-                    return data["candidates"][0]["content"]["parts"][0]["text"]
+                    out_text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
+                    # Loại bỏ code block ```html ... ``` nếu Gemini tự bọc
+                    if out_text.startswith("```"):
+                        out_text = re.sub(r"^```[a-zA-Z]*\n?", "", out_text)
+                        out_text = re.sub(r"\n?```$", "", out_text).strip()
+                    return out_text
             except Exception:
                 continue
     raise RuntimeError("Gemini AI translation error across all models")
