@@ -189,6 +189,13 @@ SPOKEN_IDIOMS = {
     "đã chuyển rồi": ("已经转了 / 已经转账了", "Yǐjīng zhuǎn le / Yǐjīng zhuǎnzhàng le", "Báo đã hoàn tất chuyển khoản."),
     "đang chuyển": ("正在转 / 正在处理", "Zhèngzài zhuǎn / Zhèngzài chǔlǐ", "Báo đang thực hiện chuyển khoản/xử lý."),
     "chuyển xong rồi": ("转好了，请查收！", "Zhuǎn hǎo le, qǐng cháshōu!", "Báo đã chuyển tiền xong, mời kiểm tra."),
+    "hãy quy đổi ra u giúp tôi": ("麻烦帮我折算成U！", "Máfan bāng wǒ zhésuàn chéng U!", "Quy đổi số tiền sang USDT (Crypto/P2P)."),
+    "hãy quy đổi ra u giup toi": ("麻烦帮我折算成U！", "Máfan bāng wǒ zhésuàn chéng U!", "Quy đổi số tiền sang USDT (Crypto/P2P)."),
+    "quy đổi ra u giúp tôi": ("麻烦帮我折算成U！", "Máfan bāng wǒ zhésuàn chéng U!", "Quy đổi số tiền sang USDT (Crypto/P2P)."),
+    "quy đổi ra u giup toi": ("麻烦帮我折算成U！", "Máfan bāng wǒ zhésuàn chéng U!", "Quy đổi số tiền sang USDT (Crypto/P2P)."),
+    "quy đổi ra u": ("折算成U", "Zhésuàn chéng U", "Quy đổi sang USDT."),
+    "đổi ra u": ("换成U", "Huàn chéng U", "Đổi sang USDT."),
+    "tính ra u": ("折算成U", "Zhésuàn chéng U", "Tính quy đổi sang USDT."),
 }
 
 # Ngân hàng cụm từ giao dịch, tài chính & chat lóng đối tác (Financial & P2P Chat Bank)
@@ -207,6 +214,13 @@ FINANCIAL_CHAT_IDIOMS = {
     "账户被风控了": ("Tài khoản bị dính kiểm soát rủi ro / bị quét bảo mật rồi!", "Zhànghù bèi fēngkòng le", "Tài khoản bị hệ thống ngân hàng/ví tạm khóa bảo vệ."),
     "限额了": ("Bị chạm hạn mức giao dịch rồi!", "Xiàn'é le", "Hạn mức trong ngày hoặc trên lần chuyển đã hết."),
     "稍等正在处理": ("Chờ chút nhé, bên mình đang xử lý ngay đây!", "Shāoděng zhèngzài chǔlǐ", "Báo bên kia chờ trong khi xử lý giao dịch."),
+    "hãy quy đổi ra u giúp tôi": ("麻烦帮我折算成U / 帮我换成U", "Máfan bāng wǒ zhésuàn chéng U / Bāng wǒ huàn chéng U", "Ngữ cảnh Crypto/P2P: 'U' là USDT. Nhờ đối tác quy đổi số tiền sang USDT."),
+    "hãy quy đổi ra u giup toi": ("麻烦帮我折算成U / 帮我换成U", "Máfan bāng wǒ zhésuàn chéng U / Bāng wǒ huàn chéng U", "Ngữ cảnh Crypto/P2P: Nhờ đối tác quy đổi tiền sang USDT."),
+    "quy đổi ra u giúp tôi": ("麻烦帮我折算成U", "Máfan bāng wǒ zhésuàn chéng U", "Nhờ quy đổi sang USDT."),
+    "quy đổi ra u giup toi": ("麻烦帮我折算成U", "Máfan bāng wǒ zhésuàn chéng U", "Nhờ quy đổi sang USDT."),
+    "quy đổi ra u": ("折算成U", "Zhésuàn chéng U", "Quy đổi sang USDT."),
+    "đổi ra u": ("换成U / 折算成U", "Huàn chéng U / Zhésuàn chéng U", "Đổi sang USDT."),
+    "tính ra u": ("折算成U", "Zhésuàn chéng U", "Tính quy đổi sang USDT."),
 }
 
 
@@ -292,7 +306,12 @@ async def translate_with_google(text: str, sl: str, tl: str) -> tuple[str, str]:
         "dj": "1",
         "q": text
     }
-    async with httpx.AsyncClient(timeout=10.0) as client:
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
+        "Accept": "*/*",
+        "Accept-Language": "vi-VN,vi;q=0.9,zh-CN;q=0.8,en;q=0.7",
+    }
+    async with httpx.AsyncClient(timeout=10.0, headers=headers) as client:
         res = await client.get(url, params=params)
         res.raise_for_status()
         data = res.json()
@@ -310,6 +329,26 @@ async def translate_with_google(text: str, sl: str, tl: str) -> tuple[str, str]:
             pinyin_raw = s["src_translit"]
             break
     return trans_text, pinyin_raw
+
+
+async def translate_with_mymemory(text: str, sl: str, tl: str) -> tuple[str, str]:
+    """Bộ dịch đám mây quốc tế MyMemory (không chặn IP datacenter)."""
+    url = "https://api.mymemory.translated.net/get"
+    params = {
+        "q": text,
+        "langpair": f"{sl}|{tl}"
+    }
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+    }
+    async with httpx.AsyncClient(timeout=10.0, headers=headers) as client:
+        res = await client.get(url, params=params)
+        res.raise_for_status()
+        data = res.json()
+        translated = data.get("responseData", {}).get("translatedText", "")
+        if translated:
+            return translated, ""
+    raise RuntimeError("MyMemory translation unavailable")
 
 
 # ============================================================
@@ -369,7 +408,7 @@ async def translate_with_gemini_ai(text: str, api_key: str) -> str:
         ],
         "generationConfig": {"temperature": 0.3, "maxOutputTokens": 600}
     }
-    async with httpx.AsyncClient(timeout=6.0) as client:
+    async with httpx.AsyncClient(timeout=15.0) as client:
         for model in ordered_models:
             url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key.strip()}"
             try:
@@ -514,20 +553,38 @@ async def translate_text(text: str) -> str:
     norm_text_raw = re.sub(r'[!?,.~。，？！\s]', '', cleaned_text.lower())
     for phrase, (meaning, py, note) in FINANCIAL_CHAT_IDIOMS.items():
         if norm_text_raw == re.sub(r'[!?,.~。，？！\s]', '', phrase.lower()):
-            final_pinyin = make_accurate_pinyin(cleaned_text)
-            vocab_list = extract_key_vocabulary(cleaned_text)
-            res = (
-                "🌐 <b>DỊCH THUẬT SONG NGỮ (TRUNG ➔ VIỆT CHUYÊN GIAO DỊCH & KHẨU NGỮ)</b>\n"
-                "━━━━━━━━━━━━━━━━━━━━\n"
-                f"🇨🇳 <b>Câu gốc:</b> <code>{html.escape(cleaned_text)}</code>\n"
-                f"🎵 <b>Pinyin:</b> <i>{final_pinyin}</i>\n\n"
-                f"🇻🇳 <b>Nghĩa giao tiếp chuẩn:</b> <b>{html.escape(meaning)}</b>\n"
-            )
-            if vocab_list:
-                res += "\n📚 <b>Bóc tách từ vựng then chốt:</b>\n"
-                for word, wpy, wmeaning in vocab_list:
-                    mean_str = f" - <i>{html.escape(wmeaning)}</i>" if wmeaning else ""
-                    res += f"• <b>{word}</b> (<code>{wpy}</code>){mean_str}\n"
+            has_hanzi_input = any('\u4e00' <= c <= '\u9fff' for c in cleaned_text)
+            if has_hanzi_input:
+                final_pinyin = make_accurate_pinyin(cleaned_text)
+                vocab_list = extract_key_vocabulary(cleaned_text)
+                res = (
+                    "🌐 <b>DỊCH THUẬT SONG NGỮ (TRUNG ➔ VIỆT CHUYÊN GIAO DỊCH & KHẨU NGỮ)</b>\n"
+                    "━━━━━━━━━━━━━━━━━━━━\n"
+                    f"🇨🇳 <b>Câu gốc:</b> <code>{html.escape(cleaned_text)}</code>\n"
+                    f"🎵 <b>Pinyin:</b> <i>{final_pinyin}</i>\n\n"
+                    f"🇻🇳 <b>Nghĩa giao tiếp chuẩn:</b> <b>{html.escape(meaning)}</b>\n"
+                )
+                if vocab_list:
+                    res += "\n📚 <b>Bóc tách từ vựng then chốt:</b>\n"
+                    for word, wpy, wmeaning in vocab_list:
+                        mean_str = f" - <i>{html.escape(wmeaning)}</i>" if wmeaning else ""
+                        res += f"• <b>{word}</b> (<code>{wpy}</code>){mean_str}\n"
+            else:
+                final_pinyin = py if py else make_accurate_pinyin(meaning)
+                vocab_list = extract_key_vocabulary(meaning)
+                res = (
+                    "🌐 <b>DỊCH THUẬT SONG NGỮ (VIỆT ➔ TRUNG GIAO DỊCH & CRYPTO)</b>\n"
+                    "━━━━━━━━━━━━━━━━━━━━\n"
+                    f"🇻🇳 <b>Câu gốc:</b> {html.escape(cleaned_text)}\n\n"
+                    f"🇨🇳 <b>Tiếng Trung:</b> <code>{html.escape(meaning)}</code>\n"
+                    f"🎵 <b>Pinyin:</b> <i>{final_pinyin}</i>\n"
+                )
+                if vocab_list:
+                    res += "\n📚 <b>Từ vựng nổi bật:</b>\n"
+                    for word, wpy, wmeaning in vocab_list:
+                        mean_str = f" - <i>{html.escape(wmeaning)}</i>" if wmeaning else ""
+                        res += f"• <b>{word}</b> (<code>{wpy}</code>){mean_str}\n"
+
             if note:
                 res += f"\n💡 <i>Lưu ý ngữ cảnh: {note}</i>\n"
             set_cached_translation(cleaned_text, res)
@@ -565,11 +622,14 @@ async def translate_text(text: str) -> str:
     # 6. Thực hiện dịch qua Động cơ siêu tốc (Google Translate 0.39s + Sửa lỗi chuyên ngành, fallback Bing)
     try:
         if lang == "zh":
-            # Trung -> Việt (ưu tiên Google 0.39s cực nhanh)
+            # Trung -> Việt (ưu tiên Google -> MyMemory -> Bing)
             try:
                 trans_vi, py_from_engine = await translate_with_google(cleaned_text, "zh-CN", "vi")
             except Exception:
-                trans_vi, py_from_engine = await microsoft_translator.translate(cleaned_text, "zh-Hans", "vi")
+                try:
+                    trans_vi, py_from_engine = await translate_with_mymemory(cleaned_text, "zh-CN", "vi")
+                except Exception:
+                    trans_vi, py_from_engine = await microsoft_translator.translate(cleaned_text, "zh-Hans", "vi")
 
             # Áp dụng bộ lọc sửa lỗi dịch máy chuyên ngành & tiếng lóng
             trans_vi = fix_misleading_translation(cleaned_text, trans_vi)
@@ -604,8 +664,12 @@ async def translate_text(text: str) -> str:
                 trans_vi, _ = await translate_with_google(cleaned_text, "zh-CN", "vi")
                 trans_zh, _ = await translate_with_google(trans_vi, "vi", "zh-CN")
             except Exception:
-                trans_vi, _ = await microsoft_translator.translate(cleaned_text, "zh-Hans", "vi")
-                trans_zh, _ = await microsoft_translator.translate(trans_vi, "vi", "zh-Hans")
+                try:
+                    trans_vi, _ = await translate_with_mymemory(cleaned_text, "zh-CN", "vi")
+                    trans_zh, _ = await translate_with_mymemory(trans_vi, "vi", "zh-CN")
+                except Exception:
+                    trans_vi, _ = await microsoft_translator.translate(cleaned_text, "zh-Hans", "vi")
+                    trans_zh, _ = await microsoft_translator.translate(trans_vi, "vi", "zh-Hans")
 
             final_pinyin = make_accurate_pinyin(trans_zh) if trans_zh else cleaned_text
 
@@ -622,11 +686,14 @@ async def translate_text(text: str) -> str:
             return res
 
         else:
-            # Việt -> Trung (ưu tiên Google 0.39s cực nhanh)
+            # Việt -> Trung (ưu tiên Google -> MyMemory -> Bing)
             try:
                 trans_zh, py_from_engine = await translate_with_google(cleaned_text, "vi", "zh-CN")
             except Exception:
-                trans_zh, py_from_engine = await microsoft_translator.translate(cleaned_text, "vi", "zh-Hans")
+                try:
+                    trans_zh, py_from_engine = await translate_with_mymemory(cleaned_text, "vi", "zh-CN")
+                except Exception:
+                    trans_zh, py_from_engine = await microsoft_translator.translate(cleaned_text, "vi", "zh-Hans")
 
             # Tạo Pinyin chuẩn bằng pypinyin
             final_pinyin = make_accurate_pinyin(trans_zh)
