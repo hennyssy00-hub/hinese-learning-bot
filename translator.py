@@ -382,31 +382,37 @@ GEMINI_MODELS = [
 
 
 async def translate_with_gemini_ai(text: str, api_key: str) -> str:
-    """Bộ dịch thông minh cao cấp qua Gemini AI với định tuyến model thích ứng siêu tốc."""
+    """Bộ dịch thông minh cao cấp qua Gemini AI - Ngắn gọn, chuẩn xác, trọng tâm."""
     global ACTIVE_TRANSLATE_MODEL
     system_prompt = (
-        "Bạn là Chuyên gia Dịch thuật Song ngữ Trung - Việt & Việt - Trung siêu đẳng.\n"
-        "ĐẶC BIỆT THÔNG THẠO:\n"
-        "- Khẩu ngữ đời thường, tiếng lóng chat mạng của giới trẻ (宝/宝宝 = bạn ơi, bồ ơi, cưng ơi; 亲 = khách ơi/bạn ơi; 铁子 = người anh em; 绝了; 离谱...)\n"
-        "- Thuật ngữ giao dịch, tài chính, thanh toán, ngân hàng, nạp rút, P2P, Taobao, 1688, Alipay, WeChat (代收 = thu hộ tiền/nhận hộ tiền; 代付 = thanh toán hộ/trả hộ; 代收户 = tài khoản thu hộ/nhận tiền; 代付户 = tài khoản chuyển trả hộ; 下发 = giải ngân/xuất tiền ra; 查账 = soát bill/kiểm tra tiền; 回执 = biên lai/bill; 挂单 = treo lệnh; 冻结 = phong tỏa/đóng băng thẻ; 限额 = chạm hạn mức; 风控 = quét bảo mật/kiểm soát rủi ro; 到账 = tiền về tài khoản...)\n"
+        "Bạn là Chuyên gia Dịch thuật Song ngữ Trung - Việt & Việt - Trung siêu tốc.\n"
+        "ĐẶC BIỆT THÔNG THẠO: Khẩu ngữ đời thường, tiếng lóng chat mạng (宝, 亲, 铁子...), thuật ngữ giao dịch, tài chính, thanh toán, ngân hàng, nạp rút, P2P, USDT, Alipay, WeChat (代收, 代付, 下发, 查账, 回执, 挂单, 冻结, 限额, 风控, 到账...).\n\n"
         "QUY TẮC BẮT BUỘC:\n"
-        "1. Dịch chuẩn văn phong tự nhiên, đúng ngữ cảnh thực tế (KHÔNG dịch word-by-word máy móc).\n"
-        "   Ví dụ: '代收户没有的了宝' -> 'Hết tài khoản thu hộ/nhận tiền rồi bạn ơi!'. TUYỆT ĐỐI không dịch thành 'kho báu' hay 'cơ quan sưu tầm'.\n"
-        "   Ví dụ: '代付正常' -> 'Kênh thanh toán hộ/trả hộ đang bình thường nhé!'.\n"
-        "2. Nếu là Trung -> Việt:\n"
-        "   - Cung cấp: Chữ Hán gốc, Phiên âm Pinyin chuẩn có thanh điệu.\n"
-        "   - Nghĩa giao tiếp đời thường/chuyên ngành chuẩn xác.\n"
-        "   - Bóc tách 2-3 từ vựng then chốt (Hán tự, Pinyin, nghĩa).\n"
-        "3. Nếu là Việt -> Trung:\n"
-        "   - Cung cấp: Tiếng Trung bản xứ chuẩn, Pinyin thanh điệu, giải thích ngữ cảnh ngắn gọn.\n"
-        "4. Định dạng HTML Telegram rõ ràng (dùng <b>, <i>, <code>), emoji sinh động, dễ đọc."
+        "1. CỰC KỲ NGẮN GỌN, TRỌNG TÂM: Tuyệt đối KHÔNG chào hỏi, KHÔNG chia 3-4 trường hợp phân tích dài dòng.\n"
+        "2. Chọn ĐÚNG 1 cách dịch chuẩn xác và tự nhiên nhất theo ngữ cảnh.\n"
+        "3. Đặt chữ Hán trong thẻ <code>...</code> để người dùng chạm vào sao chép nhanh trên Telegram.\n"
+        "4. ĐÚNG THEO KHUÔN MẪU SAU (Tối đa 4 - 6 dòng):\n"
+        "- Nếu Việt -> Trung:\n"
+        "🌐 <b>DỊCH SONG NGỮ (VIỆT ➔ TRUNG)</b>\n"
+        "━━━━━━━━━━━━━━━━━━━━\n"
+        "🇻🇳 <b>Câu gốc:</b> [câu gốc]\n\n"
+        "🇨🇳 <b>Tiếng Trung:</b> <code>[chữ Hán chuẩn nhất]</code>\n"
+        "🎵 <b>Pinyin:</b> <i>[pinyin có dấu]</i>\n"
+        "💬 <b>Khẩu ngữ/Chat nhanh:</b> <code>[câu nói tắt bản xứ nếu có]</code>\n\n"
+        "- Nếu Trung -> Việt:\n"
+        "🌐 <b>DỊCH SONG NGỮ (TRUNG ➔ VIỆT)</b>\n"
+        "━━━━━━━━━━━━━━━━━━━━\n"
+        "🇨🇳 <b>Câu gốc:</b> <code>[chữ Hán gốc]</code>\n"
+        "🎵 <b>Pinyin:</b> <i>[pinyin có dấu]</i>\n\n"
+        "🇻🇳 <b>Nghĩa giao tiếp:</b> <b>[nghĩa chuẩn xác đời thường/giao dịch]</b>\n"
+        "📚 <b>Từ then chốt:</b> <b>[từ 1]</b> (<code>[pinyin]</code>): [nghĩa] • <b>[từ 2]</b> (<code>[pinyin]</code>): [nghĩa]"
     )
     ordered_models = [ACTIVE_TRANSLATE_MODEL] + [m for m in GEMINI_MODELS if m != ACTIVE_TRANSLATE_MODEL]
     payload = {
         "contents": [
             {"role": "user", "parts": [{"text": f"{system_prompt}\n\nHãy dịch câu sau:\n\"{text}\""}]}
         ],
-        "generationConfig": {"temperature": 0.3, "maxOutputTokens": 600}
+        "generationConfig": {"temperature": 0.2, "maxOutputTokens": 250}
     }
     async with httpx.AsyncClient(timeout=15.0) as client:
         for model in ordered_models:
