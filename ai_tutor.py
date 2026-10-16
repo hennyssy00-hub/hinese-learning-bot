@@ -40,24 +40,37 @@ def set_gemini_api_key(new_key: str) -> bool:
     return True
 
 
+# Điều hướng model AI thông minh: Ghi nhớ model phản hồi tốt nhất
+ACTIVE_TUTOR_MODEL = "gemini-3.1-flash-lite"
+GEMINI_MODELS = [
+    "gemini-3.1-flash-lite",
+    "gemini-3.8-flash",
+    "gemini-3.6-flash",
+    "gemini-3.5-flash",
+    "gemini-flash-lite-latest"
+]
+
+
 async def validate_gemini_key(api_key: str) -> tuple[bool, str]:
     """Kiểm tra xem Gemini API key có hoạt động và hợp lệ không."""
+    global ACTIVE_TUTOR_MODEL
     cleaned = api_key.strip()
     if not cleaned or "..." in cleaned or cleaned == "AIzaSy":
         return False, "Bạn chưa điền mã API Key thật (chuỗi 'AIzaSy...' chỉ là ví dụ minh họa). Hãy vào Google AI Studio tạo key và dán toàn bộ chuỗi key vào đây!"
 
-    models_to_test = ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-flash-lite-latest", "gemini-3.1-flash-lite", "gemini-3.8-flash"]
+    ordered_models = [ACTIVE_TUTOR_MODEL] + [m for m in GEMINI_MODELS if m != ACTIVE_TUTOR_MODEL]
     last_err = ""
-    for model in models_to_test:
+    for model in ordered_models:
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={cleaned}"
         payload = {
             "contents": [{"parts": [{"text": "Hello"}]}],
             "generationConfig": {"maxOutputTokens": 5}
         }
         try:
-            async with httpx.AsyncClient(timeout=8.0) as client:
+            async with httpx.AsyncClient(timeout=6.0) as client:
                 res = await client.post(url, json=payload)
                 if res.status_code == 200:
+                    ACTIVE_TUTOR_MODEL = model
                     return True, model
                 # Nếu API key không hợp lệ hoặc bị cấm, dừng ngay để báo lỗi nhanh
                 if res.status_code in (400, 403):
@@ -124,18 +137,20 @@ async def chat_with_gemini(user_message: str, history: list[dict], api_key: str)
         "contents": contents,
         "generationConfig": {
             "temperature": 0.7,
-            "maxOutputTokens": 2048,
+            "maxOutputTokens": 1024,
         }
     }
 
-    models = ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-flash-lite-latest", "gemini-3.1-flash-lite", "gemini-3.8-flash"]
+    global ACTIVE_TUTOR_MODEL
+    ordered_models = [ACTIVE_TUTOR_MODEL] + [m for m in GEMINI_MODELS if m != ACTIVE_TUTOR_MODEL]
     last_err = None
-    async with httpx.AsyncClient(timeout=30.0) as client:
-        for model in models:
+    async with httpx.AsyncClient(timeout=8.0) as client:
+        for model in ordered_models:
             url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key.strip()}"
             try:
                 res = await client.post(url, json=payload)
                 if res.status_code == 200:
+                    ACTIVE_TUTOR_MODEL = model
                     data = res.json()
                     return data["candidates"][0]["content"]["parts"][0]["text"]
                 last_err = f"Status {res.status_code}: {res.text[:100]}"
