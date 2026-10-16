@@ -628,14 +628,14 @@ async def translate_text(text: str) -> str:
     # 6. Thực hiện dịch qua Động cơ siêu tốc (Google Translate 0.39s + Sửa lỗi chuyên ngành, fallback Bing)
     try:
         if lang == "zh":
-            # Trung -> Việt (ưu tiên Google -> MyMemory -> Bing)
+            # Trung -> Việt (ưu tiên Microsoft Neural chuẩn đời thường -> Google -> MyMemory)
             try:
-                trans_vi, py_from_engine = await translate_with_google(cleaned_text, "zh-CN", "vi")
+                trans_vi, py_from_engine = await microsoft_translator.translate(cleaned_text, "zh-Hans", "vi")
             except Exception:
                 try:
-                    trans_vi, py_from_engine = await translate_with_mymemory(cleaned_text, "zh-CN", "vi")
+                    trans_vi, py_from_engine = await translate_with_google(cleaned_text, "zh-CN", "vi")
                 except Exception:
-                    trans_vi, py_from_engine = await microsoft_translator.translate(cleaned_text, "zh-Hans", "vi")
+                    trans_vi, py_from_engine = await translate_with_mymemory(cleaned_text, "zh-CN", "vi")
 
             # Áp dụng bộ lọc sửa lỗi dịch máy chuyên ngành & tiếng lóng
             trans_vi = fix_misleading_translation(cleaned_text, trans_vi)
@@ -667,15 +667,15 @@ async def translate_text(text: str) -> str:
         elif lang == "pinyin":
             # Pinyin -> Cả Hán Tự & Tiếng Việt
             try:
-                trans_vi, _ = await translate_with_google(cleaned_text, "zh-CN", "vi")
-                trans_zh, _ = await translate_with_google(trans_vi, "vi", "zh-CN")
+                trans_vi, _ = await microsoft_translator.translate(cleaned_text, "zh-Hans", "vi")
+                trans_zh, _ = await microsoft_translator.translate(trans_vi, "vi", "zh-Hans")
             except Exception:
                 try:
+                    trans_vi, _ = await translate_with_google(cleaned_text, "zh-CN", "vi")
+                    trans_zh, _ = await translate_with_google(trans_vi, "vi", "zh-CN")
+                except Exception:
                     trans_vi, _ = await translate_with_mymemory(cleaned_text, "zh-CN", "vi")
                     trans_zh, _ = await translate_with_mymemory(trans_vi, "vi", "zh-CN")
-                except Exception:
-                    trans_vi, _ = await microsoft_translator.translate(cleaned_text, "zh-Hans", "vi")
-                    trans_zh, _ = await microsoft_translator.translate(trans_vi, "vi", "zh-Hans")
 
             final_pinyin = make_accurate_pinyin(trans_zh) if trans_zh else cleaned_text
 
@@ -692,14 +692,14 @@ async def translate_text(text: str) -> str:
             return res
 
         else:
-            # Việt -> Trung (ưu tiên Google -> MyMemory -> Bing)
+            # Việt -> Trung (ưu tiên Microsoft Neural chuẩn đời thường -> Google -> MyMemory)
             try:
-                trans_zh, py_from_engine = await translate_with_google(cleaned_text, "vi", "zh-CN")
+                trans_zh, py_from_engine = await microsoft_translator.translate(cleaned_text, "vi", "zh-Hans")
             except Exception:
                 try:
-                    trans_zh, py_from_engine = await translate_with_mymemory(cleaned_text, "vi", "zh-CN")
+                    trans_zh, py_from_engine = await translate_with_google(cleaned_text, "vi", "zh-CN")
                 except Exception:
-                    trans_zh, py_from_engine = await microsoft_translator.translate(cleaned_text, "vi", "zh-Hans")
+                    trans_zh, py_from_engine = await translate_with_mymemory(cleaned_text, "vi", "zh-CN")
 
             # Tạo Pinyin chuẩn bằng pypinyin
             final_pinyin = make_accurate_pinyin(trans_zh)
