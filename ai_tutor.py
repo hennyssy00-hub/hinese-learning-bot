@@ -53,10 +53,10 @@ def set_gemini_api_key(new_key: str) -> bool:
 ACTIVE_TUTOR_MODEL = "gemini-3.1-flash-lite"
 GEMINI_MODELS = [
     "gemini-3.1-flash-lite",
-    "gemini-3.8-flash",
+    "gemini-flash-lite-latest",
+    "gemini-3.5-flash-lite",
     "gemini-3.6-flash",
-    "gemini-3.5-flash",
-    "gemini-flash-lite-latest"
+    "gemini-3.8-flash",
 ]
 
 

@@ -224,6 +224,12 @@ FINANCIAL_CHAT_IDIOMS = {
     "quy đổi ra u": ("折算成U", "Zhésuàn chéng U", "Quy đổi sang USDT."),
     "đổi ra u": ("换成U / 折算成U", "Huàn chéng U / Zhésuàn chéng U", "Đổi sang USDT."),
     "tính ra u": ("折算成U", "Zhésuàn chéng U", "Tính quy đổi sang USDT."),
+    "hãy điều thêm người hỗ trợ": ("再调些人手过来协助 / 再叫点人来帮忙", "Zài diào xiē rénshǒu guòlái xiézhù / Zài jiào diǎn rén lái bāngmáng", "Điều thêm nhân lực, nhân viên hỗ trợ."),
+    "điều thêm người hỗ trợ": ("再调些人手过来协助 / 再叫点人来帮忙", "Zài diào xiē rénshǒu guòlái xiézhù / Zài jiào diǎn rén lái bāngmáng", "Bổ sung người giúp đỡ/hỗ trợ."),
+    "điều thêm người": ("再调派人手 / 叫人过来", "Zài diàopài rénshǒu / Jiào rén guòlái", "Bổ sung thêm người."),
+    "cần thêm người hỗ trợ": ("需要加派人手支援 / 还要人来帮忙", "Xūyào jiāpài rénshǒu zhīyuán / Hái yào rén lái bāngmáng", "Cần thêm người trợ giúp."),
+    "báo cáo tình hình": ("汇报情况 / 说下进度", "Huìbào qíngkuàng / Shuō xià jìndù", "Báo cáo tiến độ/tình hình."),
+    "bên mình đang xử lý": ("我们正在处理 / 已经在弄了", "Wǒmen zhèngzài chǔlǐ / Yǐjīng zài nòng le", "Thông báo đang giải quyết."),
     "你把u补齐我们会付物流费的": ("Bạn nạp bù đủ số USDT đi, bên mình sẽ thanh toán phí vận chuyển (logistics) cho nhé!", "Nǐ bǎ U bǔqí, wǒmen huì fù wùliúfèi de", "Ngữ cảnh giao dịch P2P & logistics: 'U' là USDT, '补齐' là nạp bù đủ phần thiếu, '物流费' là cước phí vận chuyển."),
     "你把u补齐我们会付物流费": ("Bạn nạp bù đủ số USDT đi, bên mình sẽ thanh toán phí vận chuyển cho nhé!", "Nǐ bǎ U bǔqí, wǒmen huì fù wùliúfèi", "Ngữ cảnh giao dịch P2P & vận tải."),
     "把u补齐": ("Bù đủ số USDT đi nhé!", "Bǎ U bǔqí", "Nhắc đối tác bù đủ số tiền USDT còn thiếu."),
@@ -364,12 +370,33 @@ async def translate_with_mymemory(text: str, sl: str, tl: str) -> tuple[str, str
 _TRANSLATION_CACHE: dict[str, str] = {}
 _MAX_CACHE_SIZE = 2000
 
+def is_valid_translation_output(text_input: str, output: str) -> bool:
+    """Kiểm tra bản dịch có đầy đủ nội dung hay bị cắt cụt / lỗi token."""
+    if not output or len(output.strip()) < 35:
+        return False
+    has_hanzi_in = any('\u4e00' <= c <= '\u9fff' for c in text_input)
+    if has_hanzi_in:
+        # Trung -> Việt: phải có phần giải nghĩa tiếng Việt
+        return any(k in output for k in ["Nghĩa", "nghĩa", "🇻🇳"])
+    else:
+        # Việt -> Trung: bắt buộc phải có chữ Hán trong kết quả
+        return any('\u4e00' <= c <= '\u9fff' for c in output)
+
 def get_cached_translation(text: str) -> str | None:
     """Lấy bản dịch đã có sẵn trong bộ nhớ đệm (0.0001s)."""
-    return _TRANSLATION_CACHE.get(text.strip().lower())
+    key = text.strip().lower()
+    cached = _TRANSLATION_CACHE.get(key)
+    if cached:
+        if not is_valid_translation_output(text, cached):
+            _TRANSLATION_CACHE.pop(key, None)
+            return None
+        return cached
+    return None
 
 def set_cached_translation(text: str, result: str):
-    """Lưu kết quả dịch vào bộ nhớ đệm."""
+    """Lưu kết quả dịch vào bộ nhớ đệm (chỉ lưu bản dịch hợp lệ)."""
+    if not is_valid_translation_output(text, result):
+        return
     if len(_TRANSLATION_CACHE) >= _MAX_CACHE_SIZE:
         old_keys = list(_TRANSLATION_CACHE.keys())[:200]
         for k in old_keys:
@@ -381,10 +408,10 @@ def set_cached_translation(text: str, result: str):
 ACTIVE_TRANSLATE_MODEL = "gemini-3.1-flash-lite"
 GEMINI_MODELS = [
     "gemini-3.1-flash-lite",
-    "gemini-3.8-flash",
+    "gemini-flash-lite-latest",
+    "gemini-3.5-flash-lite",
     "gemini-3.6-flash",
-    "gemini-3.5-flash",
-    "gemini-flash-lite-latest"
+    "gemini-3.8-flash",
 ]
 
 
@@ -419,7 +446,7 @@ async def translate_with_gemini_ai(text: str, api_key: str) -> str:
         "contents": [
             {"role": "user", "parts": [{"text": f"{system_prompt}\n\nHãy dịch câu sau:\n\"{text}\""}]}
         ],
-        "generationConfig": {"temperature": 0.2, "maxOutputTokens": 600}
+        "generationConfig": {"temperature": 0.2, "maxOutputTokens": 1200}
     }
     async with httpx.AsyncClient(timeout=8.0) as client:
         for model in ordered_models:
@@ -427,13 +454,25 @@ async def translate_with_gemini_ai(text: str, api_key: str) -> str:
             try:
                 res = await client.post(url, json=payload)
                 if res.status_code == 200:
-                    ACTIVE_TRANSLATE_MODEL = model
                     data = res.json()
-                    out_text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
+                    candidates = data.get("candidates", [])
+                    if not candidates:
+                        continue
+                    cand = candidates[0]
+                    parts = cand.get("content", {}).get("parts", [])
+                    if not parts or "text" not in parts[0]:
+                        continue
+                    out_text = parts[0]["text"].strip()
                     # Loại bỏ code block ```html ... ``` nếu Gemini tự bọc
                     if out_text.startswith("```"):
                         out_text = re.sub(r"^```[a-zA-Z]*\n?", "", out_text)
                         out_text = re.sub(r"\n?```$", "", out_text).strip()
+                    
+                    # Kiểm tra tính toàn vẹn: nếu bị cắt cụt do MAX_TOKENS hoặc thiếu chữ Hán/nghĩa thì bỏ qua
+                    if not is_valid_translation_output(text, out_text):
+                        continue
+
+                    ACTIVE_TRANSLATE_MODEL = model
                     return out_text
             except Exception:
                 continue
@@ -629,8 +668,9 @@ async def translate_text(text: str) -> str:
     if gemini_key:
         try:
             ai_res = await translate_with_gemini_ai(cleaned_text, gemini_key)
-            set_cached_translation(cleaned_text, ai_res)
-            return ai_res
+            if is_valid_translation_output(cleaned_text, ai_res):
+                set_cached_translation(cleaned_text, ai_res)
+                return ai_res
         except Exception:
             pass
 
